@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Terms of Service - CiteCheck{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>⚖️ Terms of Service</h1>
+    <p class="subtitle">Simple terms for using CiteCheck</p>
+    
+    <div style="text-align: left; line-height: 1.8; color: #cccccc;">
+        <p><strong>Last Updated:</strong> June 10, 2025</p>
+        
+        <h2 style="color: #ffffff; margin-top: 30px;">What CiteCheck Is</h2>
+        <p>CiteCheck is a free web tool that helps verify legal citations by searching the CourtListener database. It's designed to help identify potential AI hallucinations in legal citations.</p>
+        
+        <h2 style="color: #ffffff; margin-top: 30px;">What You Need</h2>
+        <ul>
+            <li>✅ A valid CourtListener API key (free from <a href="https://www.courtlistener.com/api/" target="_blank" style="color: #3498db;">CourtListener.com</a>)</li>
+            <li>✅ Basic understanding that this is a research tool, not legal advice</li>
+            <li>✅ Agreement to use the service responsibly</li>
+        </ul>
+        
+        <h2 style="color: #ffffff; margin-top: 30px;">Important Disclaimers</h2>
+        <div style="background: #2a1810; border-left: 4px solid #e74c3c; padding: 15px; margin: 20px 0; border-radius: 5px;">
+            <p><strong>⚠️ Not Legal Advice:</strong> CiteCheck is a research tool only. Results should not be considered legal advice or relied upon for legal decisions.</p>
+            <p><strong>⚠️ No Guarantees:</strong> We don't guarantee accuracy, completeness, or availability of search results.</p>
+            <p><strong>⚠️ Third-Party Service:</strong> We rely on CourtListener's database. Limitations in their data affect our results.</p>
+        </div>
+        
+        <h2 style="color: #ffffff; margin-top: 30px;">Your Responsibilities</h2>
+        <p><strong>API Key Security:</strong> Keep your CourtListener API key secure. You're responsible for all activity under your key.</p>
+        
+        <p><strong>Appropriate Use:</strong> Don't use CiteCheck for:</p>
+        <ul>
+            <li>❌ Illegal activities</li>
+            <li>❌ Circumventing CourtListener's terms</li>
+            <li>❌ Automated scraping or bulk downloading</li>
+            <li>❌ Overloading our servers</li>
+        </ul>
+        
+        <h2 style="color: #ffffff; margin-top: 30px;">Service Availability</h2>
+        <p>CiteCheck is provided "as-is" and may be unavailable due to:</p>
+        <ul>
+            <li>Maintenance</li>
+            <li>CourtListener API issues</li>
+            <li>Technical problems</li>
+            <li>Hosting provider issues</li>
+        </ul>
+        
+        <h2 style="color: #ffffff; margin-top: 30px;">Limitation of Liability</h2>
+        <p>CiteCheck is a free service provided without warranty. We're not liable for:</p>
+        <ul>
+            <li>Incorrect or incomplete search results</li>
+            <li>Decisions made based on our results</li>
+            <li>Service interruptions</li>
+            <li>Third-party service issues</li>
+        </ul>
+        
+        <h2 style="color: #ffffff; margin-top: 30px;">Changes to Terms</h2>
+        <p>We may update these terms occasionally. Continued use means acceptance of updated terms.</p>
+        
+        <h2 style="color: #ffffff; margin-top: 30px;">Contact</h2>
+        <p>Questions or concerns? Reach out via our <a href="https://github.com/marchoag/citecheck" target="_blank" style="color: #3498db;">GitHub repository</a>.</p>
+        
+        <div style="margin-top: 40px; text-align: center;">
+            <button class="action-btn secondary" onclick="window.location.href='/'">← Back to CiteCheck</button>
+        </div>
+    </div>
+</div>
+{% endblock %} 

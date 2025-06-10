@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy - CiteCheck{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>🔒 Privacy Policy</h1>
+    <p class="subtitle">How CiteCheck handles your data</p>
+    
+    <div style="text-align: left; line-height: 1.8; color: #cccccc;">
+        <p><strong>Last Updated:</strong> June 10, 2025</p>
+        
+        <h2 style="color: #ffffff; margin-top: 30px;">What We Collect</h2>
+        <p><strong>API Keys:</strong> We temporarily store your CourtListener API key in your browser's memory only during your session. This key is never saved to our servers, databases, or any persistent storage.</p>
+        
+        <p><strong>Search Queries:</strong> We process your citation search text to query the CourtListener database, but we do not store your searches.</p>
+        
+        <p><strong>Technical Data:</strong> Standard web server logs (IP address, browser type, timestamps) for security and performance monitoring.</p>
+        
+        <h2 style="color: #ffffff; margin-top: 30px;">What We Don't Store</h2>
+        <ul>
+            <li>❌ Your API keys (cleared when you close/refresh)</li>
+            <li>❌ Your search history</li>
+            <li>❌ Personal information</li>
+            <li>❌ Cookies or tracking data</li>
+            <li>❌ Legal documents or case content</li>
+        </ul>
+        
+        <h2 style="color: #ffffff; margin-top: 30px;">Third-Party Services</h2>
+        <p><strong>CourtListener:</strong> Your searches are sent to CourtListener.com using your API key. Please review their <a href="https://www.courtlistener.com/terms/" target="_blank" style="color: #3498db;">Terms of Service</a> and <a href="https://www.courtlistener.com/privacy/" target="_blank" style="color: #3498db;">Privacy Policy</a>.</p>
+        
+        <p><strong>Render:</strong> Our hosting provider. Review their <a href="https://render.com/privacy" target="_blank" style="color: #3498db;">Privacy Policy</a>.</p>
+        
+        <h2 style="color: #ffffff; margin-top: 30px;">Your Rights</h2>
+        <p>Since we don't store personal data, there's nothing to delete or modify. Your API key stays in your browser only and is automatically cleared when you leave.</p>
+        
+        <h2 style="color: #ffffff; margin-top: 30px;">Security</h2>
+        <p>We use HTTPS encryption and follow security best practices. Your API key never leaves your browser except to make authorized requests to CourtListener.</p>
+        
+        <h2 style="color: #ffffff; margin-top: 30px;">Contact</h2>
+        <p>Questions about privacy? Contact us through our <a href="https://github.com/marchoag/citecheck" target="_blank" style="color: #3498db;">GitHub repository</a>.</p>
+        
+        <div style="margin-top: 40px; text-align: center;">
+            <button class="action-btn secondary" onclick="window.location.href='/'">← Back to CiteCheck</button>
+        </div>
+    </div>
+</div>
+{% endblock %} 
