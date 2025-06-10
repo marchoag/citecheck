@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h1>⚖️ Legal Citation Verifier</h1>
+    <p class="subtitle">Verify if legal case names and citations are real or AI hallucinations</p>
+    
+    <form id="citationForm">
+        <div class="input-group">
+            <div class="label-with-status">
+                <label for="apiKey">🔑 Your CourtListener API Key:</label>
+                <div id="apiStatus" class="api-status-inline">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span class="status-text" id="statusText">API</span>
+                </div>
+            </div>
+            <input 
+                type="password" 
+                id="apiKey" 
+                name="apiKey" 
+                placeholder="Paste your CourtListener API token here"
+                required
+            >
+            <small style="color: #7f8c8d; margin-top: 5px; display: block;">
+                🔒 Get your <strong>FREE</strong> API key at <a href="https://www.courtlistener.com/api/" target="_blank" style="color: #3498db;">courtlistener.com/api</a><br>
+                🛡️ <strong>Your API key stays in your browser and is never stored anywhere</strong><br>
+                ⚡ Your key = your usage limits & costs (we don't pay for your searches)<br>
+                🔄 <em>Key is cleared when you refresh or close this page</em>
+            </small>
+        </div>
+        
+        <div class="input-group">
+            <label for="citation">Enter case name, citation, or both:</label>
+            <input 
+                type="text" 
+                id="citation" 
+                name="case_search_text" 
+                placeholder="e.g., Roe v. Wade, 410 U.S. 113, 623 P.2d 268, or Green v. Superior Court"
+                autocomplete="off"
+                data-lpignore="true"
+                data-form-type="other"
+                required
+            >
+            <small style="color: #7f8c8d; margin-top: 5px; display: block;">
+                💡 <strong>You can search by:</strong><br>
+                • Full case name: "Roe v. Wade"<br>
+                • Citation number: "410 U.S. 113" or "623 P.2d 268"<br>
+                • Both together: "Roe v. Wade, 410 U.S. 113"<br>
+                ⚠️ Copy/paste exact text from your document for best AI hallucination detection
+            </small>
+        </div>
+        <button type="submit" class="btn" id="submitBtn">
+            ✓ Verify Case Name
+        </button>
+    </form>
+    
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        Searching CourtListener database...
+    </div>
+    
+    <div id="error" class="error" style="display: none;"></div>
+    
+    <div id="results" class="results" style="display: none;">
+        <h3 id="resultsTitle"></h3>
+        <div id="resultsContainer"></div>
+    </div>
+</div>
+
+<script>
+// ============================================================================
+// BULLETPROOF API KEY SECURITY - IN-MEMORY ONLY
+// ============================================================================
+let currentResults = [];
+let currentApiKey = null; // ONLY in-memory storage - never persisted!
+
+// Clear API key on page unload/refresh for maximum security
+window.addEventListener('beforeunload', function() {
+    currentApiKey = null;
+    document.getElementById('apiKey').value = '';
+});
+
+// Clear API key when user navigates away
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        // Page is being hidden - clear sensitive data
+        currentApiKey = null;
+    }
+});
+
+document.getElementById('citationForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const citation = document.getElementById('citation').value.trim();
+    const apiKeyInput = document.getElementById('apiKey');
+    const apiKey = apiKeyInput.value.trim();
+    const submitBtn = document.getElementById('submitBtn');
+    const loading = document.getElementById('loading');
+    const error = document.getElementById('error');
+    const results = document.getElementById('results');
+    
+    // Validate API key format before proceeding
+    if (!apiKey) {
+        error.textContent = 'API key is required';
+        error.style.display = 'block';
+        return;
+    }
+    
+    if (apiKey.length < 20 || !apiKey.match(/^[a-f0-9]{40}$/)) {
+        error.textContent = 'Invalid API key format. CourtListener API keys are 40-character hexadecimal strings.';
+        error.style.display = 'block';
+        return;
+    }
+    
+    // Store API key ONLY in memory - NEVER persisted anywhere
+    currentApiKey = apiKey;
+    
+    // Reset UI
+    error.style.display = 'none';
+    results.style.display = 'none';
+    loading.style.display = 'block';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Searching...';
+    
+    try {
+        const response = await fetch('/api/check', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-API-Key': currentApiKey  // Use in-memory key only
+            },
+            body: JSON.stringify({ citation: citation })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Request failed');
+        }
+        
+        // Store results
+        currentResults = data.cases || [];
+        
+        // Display results
+        displayResults(data, citation);
+        
+    } catch (err) {
+        error.textContent = err.message;
+        error.style.display = 'block';
+    } finally {
+        loading.style.display = 'none';
+        submitBtn.disabled = false;
+        submitBtn.textContent = '✓ Verify Case Name';
+        
+        // Security: Keep API key in the field for user convenience during session
+        // but it will be cleared on page refresh/close
+        apiKeyInput.value = currentApiKey;
+    }
+});
+
+function getVerificationMessage(data, statusIcon, originalQuery) {
+    if (data.status === 'valid') {
+        const method = data.method || 'Unknown';
+        const caseCount = currentResults.length;
+        const plural = caseCount === 1 ? 'case' : 'cases';
+        
+        return `
+            <div class="verification-message success">
+                <div class="message-icon">${statusIcon}</div>
+                <div class="message-content">
+                    <div class="message-title">Citation Verified!</div>
+                    <div class="message-details">
+                        Found <strong>${caseCount} matching ${plural}</strong> in the CourtListener database.<br>
+                        Search method: <strong>${method}</strong><br>
+                        <em>This case appears to be real and not an AI hallucination.</em>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (data.status === 'uncertain') {
+        return `
+            <div class="verification-message warning">
+                <div class="message-icon">${statusIcon}</div>
+                <div class="message-content">
+                    <div class="message-title">Manual Verification Needed</div>
+                    <div class="message-details">
+                        ${data.note || 'Found multiple possible matches, but none exactly match your input.'}<br>
+                        <em>Please review the results below and verify manually.</em>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        return `
+            <div class="verification-message error">
+                <div class="message-icon">${statusIcon}</div>
+                <div class="message-content">
+                    <div class="message-title">No Matching Cases Found</div>
+                    <div class="message-details">
+                        Could not find "<strong>${originalQuery}</strong>" in the CourtListener database.<br>
+                        <em>This may be an AI hallucination or a very obscure case not in the database.</em>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function displayResults(data, originalQuery) {
+    const results = document.getElementById('results');
+    const resultsTitle = document.getElementById('resultsTitle');
+    const resultsContainer = document.getElementById('resultsContainer');
+    
+    let status, statusIcon, statusColor;
+    
+    // Use the API-provided status and message
+    if (data.status === 'valid') {
+        status = 'REAL CASE ✓';
+        statusIcon = '✅';
+        statusColor = '#27ae60';
+    } else if (data.status === 'uncertain') {
+        status = 'VERIFY MANUALLY';
+        statusIcon = '⚠️';
+        statusColor = '#f39c12';
+    } else {
+        status = 'LIKELY AI HALLUCINATION';
+        statusIcon = '❌';
+        statusColor = '#e74c3c';
+    }
+    
+    resultsTitle.textContent = `${statusIcon} ${status}`;
+    resultsTitle.style.color = statusColor;
+    resultsTitle.style.fontSize = '2em';
+    resultsTitle.style.fontWeight = 'bold';
+    resultsTitle.style.textAlign = 'center';
+    
+    // Main result container with meaningful content for all cases
+    let resultHTML = `
+        <div class="verification-result">
+            ${getVerificationMessage(data, statusIcon, originalQuery)}
+        </div>
+    `;
+    
+    // Show the best case if we have results
+    if (currentResults.length > 0) {
+        const bestCase = currentResults[0]; // Just show the first/best case
+        resultHTML += `
+            <div class="single-case-display">
+                ${renderCase(bestCase)}
+            </div>
+        `;
+    }
+    
+    // Action buttons - only show the CourtListener button
+    resultHTML += `
+        <div class="action-buttons">
+            <button class="action-btn primary" onclick="viewOnCourtListener('${originalQuery}')">🔍 View on CourtListener</button>
+            <button class="action-btn secondary" onclick="newSearch()">🔄 Check Another Case</button>
+        </div>
+    `;
+    
+    resultsContainer.innerHTML = resultHTML;
+    results.style.display = 'block';
+}
+
+function renderCase(caseData) {
+    if (!caseData) return '<div class="no-case">No case data available</div>';
+    
+    return `
+        <div class="result-item highlighted">
+            <div class="case-name">${caseData.name || 'Unknown Case'}</div>
+            <div class="case-details">
+                <div class="detail">
+                    <div class="detail-label">Court</div>
+                    <div class="detail-value">${caseData.court || 'Unknown'}</div>
+                </div>
+                <div class="detail">
+                    <div class="detail-label">Date Filed</div>
+                    <div class="detail-value">${caseData.date || 'Unknown'}</div>
+                </div>
+                ${caseData.citation ? `
+                <div class="detail">
+                    <div class="detail-label">Official Citation</div>
+                    <div class="detail-value" style="font-family: monospace;">${caseData.citation}</div>
+                </div>` : ''}
+                ${caseData.citation_count ? `
+                <div class="detail">
+                    <div class="detail-label">Times Cited</div>
+                    <div class="detail-value">${caseData.citation_count.toLocaleString()}</div>
+                </div>` : ''}
+                ${caseData.absolute_url ? `
+                <div class="detail">
+                    <div class="detail-label">Direct Link</div>
+                    <div class="detail-value">
+                        <a href="https://www.courtlistener.com${caseData.absolute_url}" 
+                           target="_blank" 
+                           style="color: #3498db; text-decoration: none;">
+                           View Full Case →
+                        </a>
+                    </div>
+                </div>` : ''}
+            </div>
+        </div>
+    `;
+}
+
+function newSearch() {
+    document.getElementById('citation').value = '';
+    document.getElementById('citation').focus();
+    document.getElementById('results').style.display = 'none';
+    currentResults = [];
+}
+
+function viewOnCourtListener(query) {
+    const searchUrl = `https://www.courtlistener.com/?q=${encodeURIComponent(query)}`;
+    window.open(searchUrl, '_blank');
+}
+
+// SECURITY: No API key restoration - fresh start every session
+document.addEventListener('DOMContentLoaded', function() {
+    // Start with clean slate - no saved API keys
+    currentApiKey = null;
+    document.getElementById('apiKey').value = '';
+});
+
+// Auto-check API status when user enters/changes API key
+document.getElementById('apiKey').addEventListener('input', function() {
+    const apiKey = this.value.trim();
+    currentApiKey = apiKey; // Update in-memory key
+    
+    if (apiKey.length > 10) { // Only check if it looks like a real key
+        // Debounce the status check
+        clearTimeout(this.statusCheckTimeout);
+        this.statusCheckTimeout = setTimeout(checkApiStatus, 1000);
+    } else {
+        // Clear status if key is too short
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        statusDot.className = 'status-dot';
+        statusText.textContent = 'API';
+    }
+});
+
+// Allow Enter key to submit
+document.getElementById('citation').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        document.getElementById('citationForm').dispatchEvent(new Event('submit'));
+    }
+});
+
+// API Status Functions - Uses ONLY in-memory API key
+async function checkApiStatus() {
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    
+    // Use ONLY in-memory API key for security
+    if (!currentApiKey || currentApiKey.length < 10) {
+        statusDot.className = 'status-dot';
+        statusText.textContent = 'API ⚠️';
+        return;
+    }
+    
+    // Show checking state
+    statusDot.className = 'status-dot';
+    statusText.textContent = 'API';
+    
+    try {
+        const response = await fetch('/api/status', {
+            headers: {
+                'X-API-Key': currentApiKey  // Use in-memory key only
+            }
+        });
+        const data = await response.json();
+        
+        if (response.ok && data.status === 'connected') {
+            statusDot.className = 'status-dot connected';
+            statusText.textContent = 'API ✓';
+        } else {
+            statusDot.className = 'status-dot error';
+            statusText.textContent = 'API ✗';
+        }
+    } catch (error) {
+        statusDot.className = 'status-dot error';
+        statusText.textContent = 'API ✗';
+    }
+}
+
+// Make status clickable to refresh
+document.addEventListener('DOMContentLoaded', function() {
+    const apiStatus = document.getElementById('apiStatus');
+    apiStatus.style.cursor = 'pointer';
+    apiStatus.addEventListener('click', checkApiStatus);
+});
+
+// Check API status on page load
+checkApiStatus();
+</script>
+{% endblock %} 
