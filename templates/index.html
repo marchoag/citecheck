@@ -112,8 +112,8 @@ document.getElementById('citationForm').addEventListener('submit', async functio
         return;
     }
     
-    if (apiKey.length < 20 || !apiKey.match(/^[a-f0-9]{40}$/)) {
-        error.textContent = 'Invalid API key format. CourtListener API keys are 40-character hexadecimal strings.';
+    if (apiKey.length < 20) {
+        error.textContent = 'API key seems too short. Please check your CourtListener API key.';
         error.style.display = 'block';
         return;
     }
