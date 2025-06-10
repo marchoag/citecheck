@@ -334,7 +334,7 @@ document.getElementById('apiKey').addEventListener('input', function() {
     const apiKey = this.value.trim();
     currentApiKey = apiKey; // Update in-memory key
     
-    if (apiKey.length > 10) { // Only check if it looks like a real key
+    if (apiKey.length > 20) { // Only check if it looks like a real key
         // Debounce the status check
         clearTimeout(this.statusCheckTimeout);
         this.statusCheckTimeout = setTimeout(checkApiStatus, 1000);
@@ -360,15 +360,15 @@ async function checkApiStatus() {
     const statusText = document.getElementById('statusText');
     
     // Use ONLY in-memory API key for security
-    if (!currentApiKey || currentApiKey.length < 10) {
+    if (!currentApiKey || currentApiKey.length < 20) {
         statusDot.className = 'status-dot';
-        statusText.textContent = 'API ⚠️';
+        statusText.textContent = 'API';
         return;
     }
     
     // Show checking state
-    statusDot.className = 'status-dot';
-    statusText.textContent = 'API';
+    statusDot.className = 'status-dot checking';
+    statusText.textContent = 'API...';
     
     try {
         const response = await fetch('/api/status', {
@@ -398,7 +398,6 @@ document.addEventListener('DOMContentLoaded', function() {
     apiStatus.addEventListener('click', checkApiStatus);
 });
 
-// Check API status on page load
-checkApiStatus();
+// Don't check API status on page load since no key is entered yet
 </script>
 {% endblock %} 

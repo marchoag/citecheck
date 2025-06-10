@@ -173,6 +173,17 @@
             box-shadow: 0 0 15px rgba(255, 71, 87, 0.8);
         }
         
+        .status-dot.checking {
+            background: #FFD700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+            animation: pulse-checking 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-checking {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
         .input-wrapper {
             position: relative;
             transition: all 0.3s ease;
