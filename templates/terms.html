@@ -1,8 +1,19 @@
 {% extends "base.html" %}
 
 {% block title %}Terms of Service - CiteCheck{% endblock %}
+{% block og_title %}Terms of Service - CiteCheck{% endblock %}
+{% block twitter_title %}Terms of Service - CiteCheck{% endblock %}
+{% block og_description %}CiteCheck Terms of Service - Legal terms for using our free citation verification tool. Research tool only, not legal advice.{% endblock %}
+{% block twitter_description %}CiteCheck Terms of Service - Legal terms for using our free citation verification tool. Research tool only, not legal advice.{% endblock %}
+{% block meta_description %}CiteCheck Terms of Service - Legal terms for using our free citation verification tool. Research tool only, not legal advice.{% endblock %}
 
 {% block content %}
+<style>
+    body {
+        background: #000000 !important;
+        color: #ffffff !important;
+    }
+</style>
 <div class="card">
     <div style="position: absolute; top: 15px; right: 20px; font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); font-family: 'Roboto', sans-serif;">v1.1 ✨</div>
     
@@ -71,6 +82,12 @@
         
         <h2 style="background: linear-gradient(135deg, #00D4FF 0%, #5A67D8 50%, #9F7AEA 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 1.5rem; font-weight: 600; margin: 30px 0 20px 0;">Changes to Terms</h2>
         <p>We may update these terms occasionally. Continued use means acceptance of updated terms.</p>
+        
+        <h2 style="background: linear-gradient(135deg, #00D4FF 0%, #5A67D8 50%, #9F7AEA 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 1.5rem; font-weight: 600; margin: 30px 0 20px 0;">Governing Law & Jurisdiction</h2>
+        <div style="background: #1a1a1a; border: 1px solid #555555; border-radius: 10px; padding: 20px; margin: 15px 0;">
+            <p style="margin: 0; color: #cccccc;"><strong>Governing Law:</strong> These Terms are governed by the laws of the State of California, without regard to conflict of law principles.</p>
+            <p style="margin: 15px 0 0 0; color: #cccccc;"><strong>Jurisdiction:</strong> Any disputes arising from these Terms or use of CiteCheck shall be resolved in the courts of Marin County, California.</p>
+        </div>
         
         <h2 style="background: linear-gradient(135deg, #00D4FF 0%, #5A67D8 50%, #9F7AEA 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 1.5rem; font-weight: 600; margin: 30px 0 20px 0;">Contact</h2>
         <p>Questions or concerns? Reach out via our <a href="https://github.com/marchoag/citecheck" target="_blank" style="color: #3498db;">GitHub repository</a>.</p>

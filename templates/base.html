@@ -4,6 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Citation Checker{% endblock %}</title>
+    
+    <!-- Open Graph / Social Media Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{% block og_title %}CiteCheck - Legal Citation Checker{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Verify legal citations for AI hallucinations. Free tool to check case law citations using the CourtListener database.{% endblock %}">
+    <meta property="og:image" content="{{ url_for('static', filename='og-image.png') }}">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:site_name" content="CiteCheck">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}CiteCheck - Legal Citation Checker{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Verify legal citations for AI hallucinations. Free tool to check case law citations using the CourtListener database.{% endblock %}">
+    <meta name="twitter:image" content="{{ url_for('static', filename='og-image.png') }}">
+    
+    <!-- Additional SEO Meta Tags -->
+    <meta name="description" content="{% block meta_description %}Verify legal citations for AI hallucinations. Free tool to check case law citations using the CourtListener database.{% endblock %}">
+    <meta name="keywords" content="legal citations, case law, CourtListener, citation checker, AI hallucinations, legal research, court cases">
+    <meta name="author" content="CiteCheck">
+    <link rel="canonical" href="{{ request.url }}">
     <!-- Google Fonts - Roboto family -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
