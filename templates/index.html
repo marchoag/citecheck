@@ -14,13 +14,15 @@
                     <span class="status-text" id="statusText">API</span>
                 </div>
             </div>
-            <input 
-                type="password" 
-                id="apiKey" 
-                name="apiKey" 
-                placeholder="Paste your CourtListener API token here"
-                required
-            >
+            <div class="input-wrapper">
+                <input 
+                    type="password" 
+                    id="apiKey" 
+                    name="apiKey" 
+                    placeholder="Paste your CourtListener API token here"
+                    required
+                >
+            </div>
             <small style="color: #7f8c8d; margin-top: 5px; display: block;">
                 🔒 Get your <strong>FREE</strong> API key at <a href="https://www.courtlistener.com/api/" target="_blank" style="color: #3498db;">courtlistener.com/api</a><br>
                 🛡️ <strong>Your API key stays in your browser and is never stored anywhere</strong><br>
@@ -31,16 +33,18 @@
         
         <div class="input-group">
             <label for="citation">Enter case name, citation, or both:</label>
-            <input 
-                type="text" 
-                id="citation" 
-                name="case_search_text" 
-                placeholder="e.g., Roe v. Wade, 410 U.S. 113, 623 P.2d 268, or Green v. Superior Court"
-                autocomplete="off"
-                data-lpignore="true"
-                data-form-type="other"
-                required
-            >
+            <div class="input-wrapper">
+                <input 
+                    type="text" 
+                    id="citation" 
+                    name="case_search_text" 
+                    placeholder="e.g., Roe v. Wade, 410 U.S. 113, 623 P.2d 268, or Green v. Superior Court"
+                    autocomplete="off"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    required
+                >
+            </div>
             <small style="color: #7f8c8d; margin-top: 5px; display: block;">
                 💡 <strong>You can search by:</strong><br>
                 • Full case name: "Roe v. Wade"<br>
