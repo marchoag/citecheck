@@ -1,47 +1,37 @@
-# citecheck
-A case law citation checker using the CourtListener API
+# Citation Checker
+A beautiful web application for verifying case law citations using the CourtListener API.
 
-## Setup
+## 🚀 Try It Live
+[Deploy your own instance](#deployment) or run locally with the instructions below.
 
-1. **Get a CourtListener API key:**
-   - Sign up at https://www.courtlistener.com/
-   - Go to your profile and generate an API token
+## ✨ Features
+- **Easy-to-use web interface** - Just paste your citation and get results
+- **Flexible citation formats** - Works with case names, citations, or both:
+  - `"Roe v. Wade, 410 US 113"`
+  - `"410 US 113"`
+  - `"Roe v. Wade"`
+- **Instant verification** - Get case details, court info, dates, and links
+- **Beautiful modern UI** - Clean, professional design
+- **No setup required** - Enter your API key right in the app
 
-2. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+## 🔑 Getting an API Key
+1. Sign up at [CourtListener.com](https://www.courtlistener.com/)
+2. Go to your profile and generate an API token
+3. Paste it into the web app - that's it!
 
-3. **Configure your API key:**
-   Create a `.env` file in the project root:
-   ```
-   COURTLISTENER_API_KEY=your_actual_api_key_here
-   ```
-
-## Usage
-
-The tool accepts various citation formats:
-
+## 🛠 Running Locally
 ```bash
-# Full citation with case name
-python citecheck.py "Roe v. Wade, 410 US 113"
+# Install dependencies
+pip install -r requirements.txt
 
-# Just the publication citation
-python citecheck.py "410 US 113"
-
-# Just the case name
-python citecheck.py "Roe v. Wade"
+# Run the app
+python app.py
 ```
 
-## Features
+Then open `http://localhost:5000` in your browser.
 
-- Flexible citation parsing (handles multiple formats)
-- Search by case name, publication citation, or both
-- Returns case details including court, date, and official citations
-- Direct links to full text on CourtListener
+## 📦 Deployment
+This app is ready to deploy on Railway, Heroku, Render, or any Python hosting service.
 
-## API Key Security
-
-- Never commit your `.env` file to version control
-- The `.env` file is already in `.gitignore`
-- Use placeholder values when sharing code
+## 🔒 Security Note
+Your API key is only used for your session and is never stored or logged.
