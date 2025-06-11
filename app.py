@@ -42,11 +42,19 @@ def check_citation():
         if not citation:
             return jsonify({'error': 'Citation text cannot be empty'}), 400
         
+        # Get publication filter preference (default: published only)
+        include_unpublished = data.get('includeUnpublished', False)
+        
         # Initialize the checker with user's API key
         checker = CitationChecker(api_key)
         
-        # Check the citation
-        result = checker.check_citation(citation)
+        # Check the citation with publication filter
+        result = checker.check_citation(citation, include_unpublished=include_unpublished)
+        
+        # Debug logging
+        print(f"DEBUG: include_unpublished={include_unpublished}, result has {len(result.get('cases', []))} cases")
+        for i, case in enumerate(result.get('cases', [])[:3]):
+            print(f"  Case {i+1}: {case.get('name', 'Unknown')} - publication_status: {case.get('publication_status', 'unknown')}, is_published: {case.get('is_published', 'unknown')}")
         
         return jsonify(result)
         

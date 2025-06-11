@@ -502,7 +502,7 @@
         .verification-message.error .message-details {
             color: #fecaca;
         }
-        
+
         .action-buttons {
             display: flex;
             gap: 12px;
@@ -510,7 +510,7 @@
             flex-wrap: wrap;
             margin-top: 20px;
         }
-        
+
         .action-btn {
             padding: 12px 24px;
             border: none;
@@ -547,27 +547,27 @@
         .action-btn:hover::before {
             left: 100%;
         }
-        
+
         .action-btn.primary {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             background-size: 200% 200%;
             color: white;
             box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3);
         }
-        
+
         .action-btn.primary:hover {
             background-position: 100% 0;
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
         }
-        
+
         .action-btn.secondary {
             background: #333333;
             color: #ffffff;
             border: 1px solid #555555;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
-        
+
         .action-btn.secondary:hover {
             background: #444444;
             transform: translateY(-1px);
@@ -609,6 +609,84 @@
             font-weight: 500;
         }
         
+        /* Publication Status Styles */
+        .cases-section {
+            margin: 25px 0;
+            border: 1px solid #333333;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .cases-section.unpublished {
+            border-color: #4a4a4a;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .section-header {
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #16a085 0%, #27ae60 100%);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .section-header.unpublished {
+            background: linear-gradient(135deg, #7f8c8d 0%, #95a5a6 100%);
+        }
+        
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        
+        .section-subtitle {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-top: 2px;
+            display: block;
+        }
+        
+        .cases-container {
+            background: #222222;
+        }
+        
+        .cases-section.unpublished .cases-container {
+            background: #1a1a1a;
+        }
+        
+        .publication-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 10px;
+            letter-spacing: 0.5px;
+        }
+        
+        .publication-badge.published {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .publication-badge.unpublished {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .unpublished-case {
+            opacity: 0.95;
+            background: #1a1a1a !important;
+        }
+        
+        .unpublished-case .case-name {
+            color: #bdc3c7;
+        }
+        
+        .unpublished-case .detail-value {
+            color: #95a5a6;
+        }
+        
         /* Mobile responsiveness */
         @media (max-width: 768px) {
             .container {
@@ -633,6 +711,14 @@
             
             .action-btn {
                 min-width: 100%;
+            }
+            
+            .section-header {
+                padding: 12px 15px;
+            }
+            
+            .section-title {
+                font-size: 1rem;
             }
         }
     </style>

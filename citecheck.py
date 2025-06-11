@@ -30,23 +30,27 @@ class CitationChecker:
             'User-Agent': 'CiteCheck/2.0'
         }
     
-    def check_citation(self, citation_text):
+    def check_citation(self, citation_text, include_unpublished=False):
         """
         Enhanced citation checking using multiple CourtListener APIs.
         Handles both case names and citation formats.
+        
+        Args:
+            citation_text (str): The citation or case name to search for
+            include_unpublished (bool): Whether to include unpublished opinions (default: False)
         """
         citation_text = citation_text.strip()
         
         # First, try the Citation Lookup API if it looks like a citation format
         if self._looks_like_citation_format(citation_text):
-            citation_result = self._check_with_citation_api(citation_text)
+            citation_result = self._check_with_citation_api(citation_text, include_unpublished)
             if citation_result['status'] == 'valid':
                 return citation_result
             elif citation_result['status'] == 'invalid':
                 # Citation Lookup API couldn't find it - try targeted citation search
                 parsed_citation = self._parse_citation_parts(citation_text)
                 if parsed_citation:
-                    fallback_result = self._search_by_citation_parts(parsed_citation)
+                    fallback_result = self._search_by_citation_parts(parsed_citation, include_unpublished)
                     if fallback_result['status'] == 'valid':
                         return fallback_result
                 # If targeted search also fails, return the original citation lookup result
@@ -57,20 +61,20 @@ class CitationChecker:
         
         # If Citation API failed or this looks like a case name, use enhanced search
         if self._looks_like_case_name(citation_text):
-            return self._enhanced_case_name_search(citation_text)
+            return self._enhanced_case_name_search(citation_text, include_unpublished)
         else:
             # Try parsing as citation and search for case name
             parsed_citation = self._parse_citation_parts(citation_text)
             if parsed_citation:
-                return self._search_by_citation_parts(parsed_citation)
+                return self._search_by_citation_parts(parsed_citation, include_unpublished)
             else:
                 # Fall back to text search with warning
-                result = self._enhanced_case_name_search(citation_text)
+                result = self._enhanced_case_name_search(citation_text, include_unpublished)
                 if result['status'] == 'invalid':
                     result['message'] = f'No cases found for "{citation_text}". Try entering a case name (like "Smith v. Jones") or a proper citation (like "410 U.S. 113").'
                 return result
     
-    def _check_with_citation_api(self, citation_text):
+    def _check_with_citation_api(self, citation_text, include_unpublished=False):
         """
         Use the CourtListener Citation Lookup API to validate and parse citations.
         This is the most accurate method for citation validation.
@@ -100,6 +104,15 @@ class CitationChecker:
                                 # Get the primary/official citation only
                                 primary_citation = self._get_primary_citation(cluster.get('citations', []))
                                 
+                                # Get publication status from cluster
+                                precedential_status = cluster.get('precedential_status', 'unknown')
+                                court_name = cluster.get('docket', {}).get('court', 'Unknown') if isinstance(cluster.get('docket'), dict) else 'Unknown'
+                                is_published = self._is_published_status(precedential_status, court_name)
+                                
+                                # Filter out unpublished cases if not requested
+                                if not include_unpublished and not is_published:
+                                    continue
+                                
                                 case_info = {
                                     'name': cluster.get('case_name', 'Unknown'),
                                     'court': cluster.get('docket', {}).get('court', 'Unknown') if isinstance(cluster.get('docket'), dict) else 'Unknown',
@@ -109,7 +122,9 @@ class CitationChecker:
                                     'citation_count': cluster.get('citation_count', 0),
                                     'slug': cluster.get('slug', ''),
                                     'found_citation': citation_result.get('citation', ''),
-                                    'normalized_citation': citation_result.get('normalized_citations', [])
+                                    'normalized_citation': citation_result.get('normalized_citations', []),
+                                    'publication_status': precedential_status,
+                                    'is_published': is_published
                                 }
                                 cases.append(case_info)
                     
@@ -159,7 +174,7 @@ class CitationChecker:
                 'cases': []
             }
     
-    def _enhanced_case_name_search(self, case_name):
+    def _enhanced_case_name_search(self, case_name, include_unpublished=False):
         """
         Enhanced case name search with better filtering and date ranges.
         Based on user's friend's suggestions for using advanced operators.
@@ -172,19 +187,31 @@ class CitationChecker:
                 'format': 'json'
             }
             
+            # No publication filtering - get all results and let frontend handle it
+            
+            print(f"DEBUG: API call params: {params}")
+            
             response = requests.get(self.search_url, headers=self.headers, params=params)
             response.raise_for_status()
             data = response.json()
+            
+            print(f"DEBUG: API returned {len(data.get('results', []))} results")
+            if data.get('results'):
+                for i, result in enumerate(data.get('results', [])[:3]):
+                    print(f"  Result {i+1}: precedentialStatus='{result.get('precedentialStatus', 'MISSING')}'")
             
             results = data.get('results', [])
             
             if not results:
                 # Try a broader search without field restriction
                 params['q'] = case_name
+                print(f"DEBUG: Broader search params: {params}")
+                # Keep the same publication filter for the broader search
                 response = requests.get(self.search_url, headers=self.headers, params=params)
                 response.raise_for_status()
                 data = response.json()
                 results = data.get('results', [])
+                print(f"DEBUG: Broader search returned {len(results)} results")
             
             if not results:
                 return {
@@ -195,12 +222,27 @@ class CitationChecker:
                     'method': 'Enhanced Search API'
                 }
             
-            # Format the results
+            # Format the results with publication status
             cases = []
             for result in results[:5]:  # Limit to top 5 results
                 # Process citations to get primary citation like Citation Lookup API
                 citations = result.get('citation', [])
                 primary_citation = self._get_primary_citation_from_search_result_list(citations)
+                
+                # Get publication status - try different possible field names
+                precedential_status = (result.get('precedential_status') or 
+                                     result.get('precedentialStatus') or 
+                                     'unknown')  # Default to unknown for missing data
+                
+                # DEBUG: Add logging to see what's happening  
+                print(f"  *** NEW CODE *** Raw precedential_status = '{precedential_status}'")
+                
+                # Get court name for publication status determination
+                court_name = result.get('court', 'Unknown')
+                
+                # Determine if published based on actual status
+                is_published = self._is_published_status(precedential_status, court_name)
+                print(f"  DEBUG: is_published = {is_published}")
                 
                 case_info = {
                     'name': result.get('caseName', 'Unknown'),
@@ -208,9 +250,14 @@ class CitationChecker:
                     'date': result.get('dateFiled', 'Unknown'),
                     'citation': primary_citation,  # Single primary citation like Citation Lookup API
                     'absolute_url': result.get('absolute_url', ''),
-                    'citation_count': result.get('citeCount', 0)
+                    'citation_count': result.get('citeCount', 0),
+                    'publication_status': precedential_status,
+                    'is_published': is_published
                 }
                 cases.append(case_info)
+            
+            # Deduplicate cases by name (keep the one with highest citation count)
+            cases = self._deduplicate_cases(cases)
             
             # Find the best match among all results
             if cases:
@@ -246,7 +293,7 @@ class CitationChecker:
                 'method': 'Enhanced Search API'
             }
     
-    def _search_by_citation_parts(self, citation_parts):
+    def _search_by_citation_parts(self, citation_parts, include_unpublished=False):
         """
         Search using parsed citation components with date filtering.
         """
@@ -261,6 +308,8 @@ class CitationChecker:
                 'order_by': 'dateFiled desc',
                 'format': 'json'
             }
+            
+            # No publication filtering - get all results and let frontend handle it
             
             response = requests.get(self.search_url, headers=self.headers, params=params)
             response.raise_for_status()
@@ -283,6 +332,17 @@ class CitationChecker:
                 # Get the primary citation for this case
                 primary_citation = self._get_primary_citation_from_search_result(result, citation_parts)
                 
+                # Get publication status - try different possible field names
+                precedential_status = (result.get('precedential_status') or 
+                                     result.get('precedentialStatus') or 
+                                     'unknown')  # Default to unknown for missing data
+                
+                # Get court name for publication status determination
+                court_name = result.get('court', 'Unknown')
+                
+                # Determine if published based on actual status
+                is_published = self._is_published_status(precedential_status, court_name)
+                
                 case_info = {
                     'name': result.get('caseName', 'Unknown'),
                     'court': result.get('court', 'Unknown'),
@@ -291,7 +351,9 @@ class CitationChecker:
                     'absolute_url': result.get('absolute_url', ''),
                     'citation_count': result.get('citeCount', 0),
                     'found_citation': f"{citation_parts['volume']} {citation_parts['reporter']} {citation_parts['page']}",
-                    'normalized_citation': [f"{citation_parts['volume']} {citation_parts['reporter']} {citation_parts['page']}"]
+                    'normalized_citation': [f"{citation_parts['volume']} {citation_parts['reporter']} {citation_parts['page']}"],
+                    'publication_status': precedential_status,
+                    'is_published': is_published
                 }
                 cases.append(case_info)
             
@@ -312,6 +374,56 @@ class CitationChecker:
                 'search_type': 'citation_parts',
                 'cases': []
             }
+    
+    def _is_published_status(self, precedential_status, court_name=None):
+        """
+        Determine if a precedential_status indicates a published case.
+        
+        CourtListener precedential_status values:
+        - 'Published': Published opinion (official precedent)
+        - 'Precedential': Published opinion (alternative name)
+        - 'Unpublished': Unpublished opinion
+        - 'Unknown' or other: Treated as unpublished for safety
+        
+        Special handling:
+        - Supreme Court cases are always considered published
+        """
+        print(f"    DEBUG _is_published_status: input = '{precedential_status}', court = '{court_name}'")
+        
+        # Special case: Supreme Court cases are always published
+        if court_name and 'supreme court' in court_name.lower():
+            print(f"    DEBUG _is_published_status: Supreme Court case, returning True")
+            return True
+        
+        if not precedential_status:
+            print(f"    DEBUG _is_published_status: empty/None, returning False")
+            return False
+        
+        status = precedential_status.lower()
+        result = status in ['published', 'precedential']
+        print(f"    DEBUG _is_published_status: status = '{status}', result = {result}")
+        # Only explicitly published cases are considered published
+        return result
+    
+    def _deduplicate_cases(self, cases):
+        """
+        Remove duplicate cases by name, keeping the one with highest citation count.
+        """
+        if not cases:
+            return cases
+        
+        seen_names = {}
+        for case in cases:
+            name = case.get('name', '').strip()
+            if not name or name == 'Unknown':
+                continue
+                
+            citation_count = case.get('citation_count', 0) or 0
+            
+            if name not in seen_names or citation_count > seen_names[name].get('citation_count', 0):
+                seen_names[name] = case
+        
+        return list(seen_names.values())
     
     def _looks_like_case_name(self, text):
         """Check if text looks like a case name (contains v. or v )"""

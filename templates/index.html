@@ -9,7 +9,7 @@
 
 {% block content %}
 <div class="card">
-    <div style="position: absolute; top: 15px; right: 20px; font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); font-family: 'Roboto', sans-serif;">v1.2 ✨</div>
+    <div style="position: absolute; top: 15px; right: 20px; font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); font-family: 'Roboto', sans-serif;">v1.3 🚀</div>
     
     <h1>⚖️ CiteCheck</h1>
     <p class="subtitle">Verify legal citations for AI hallucinations</p>
@@ -54,7 +54,10 @@
                     required
                 >
             </div>
-            <small style="color: #7f8c8d; margin-top: 5px; display: block;">
+            
+
+            
+            <small style="color: #7f8c8d; margin-top: 15px; display: block;">
                 💡 <strong>You can search by:</strong><br>
                 • Full case name: "Roe v. Wade"<br>
                 • Citation number: "410 U.S. 113" or "623 P.2d 268"<br>
@@ -62,6 +65,7 @@
                 ⚠️ Copy/paste exact text from your document for best AI hallucination detection
             </small>
         </div>
+        
         <button type="submit" class="btn" id="submitBtn">
             ✓ Verify Case Name
         </button>
@@ -96,6 +100,8 @@
 // ============================================================================
 let currentResults = [];
 let currentApiKey = null; // ONLY in-memory storage - never persisted!
+let lastResultData = null;
+let lastOriginalQuery = null;
 
 // Clear API key on page unload/refresh for maximum security
 window.addEventListener('beforeunload', function() {
@@ -115,6 +121,7 @@ document.getElementById('citationForm').addEventListener('submit', async functio
     e.preventDefault();
     
     const citation = document.getElementById('citation').value.trim();
+    const includeUnpublished = false; // Always start with published only, user can filter after
     const apiKeyInput = document.getElementById('apiKey');
     const apiKey = apiKeyInput.value.trim();
     const submitBtn = document.getElementById('submitBtn');
@@ -152,7 +159,10 @@ document.getElementById('citationForm').addEventListener('submit', async functio
                 'Content-Type': 'application/json',
                 'X-API-Key': currentApiKey  // Use in-memory key only
             },
-            body: JSON.stringify({ citation: citation })
+            body: JSON.stringify({ 
+                citation: citation,
+                include_unpublished: includeUnpublished 
+            })
         });
         
         const data = await response.json();
@@ -234,6 +244,11 @@ function displayResults(data, originalQuery) {
     const resultsTitle = document.getElementById('resultsTitle');
     const resultsContainer = document.getElementById('resultsContainer');
     
+    // Store current results for potential re-filtering
+    currentResults = data.cases || [];
+    lastResultData = data;
+    lastOriginalQuery = originalQuery;
+    
     let status, statusIcon, statusColor;
     
     // Use the API-provided status and message
@@ -288,14 +303,59 @@ function displayResults(data, originalQuery) {
         </div>
     `;
     
-    // Show the best case if we have results
+    // Cases will be displayed, then filter control will be added below them
+    
+    // Show publication toggle and filter results
     if (currentResults.length > 0) {
-        const bestCase = currentResults[0]; // Just show the first/best case
-        resultHTML += `
-            <div class="single-case-display">
-                ${renderCase(bestCase)}
-            </div>
-        `;
+        // Always exclude unpublished cases (checkbox functionality disabled)
+        const includeUnpublished = false;
+        
+        // Filter based on checkbox - default is published only
+        let casesToShow = currentResults;
+        if (!includeUnpublished) {
+            casesToShow = currentResults.filter(c => c.is_published === true);
+        }
+        
+        // Separate for display
+        const publishedCases = casesToShow.filter(c => c.is_published === true);
+        const unpublishedCases = casesToShow.filter(c => c.is_published === false);
+        
+        // Debug logging
+        console.log('Current results:', currentResults);
+        console.log('Published cases:', publishedCases);
+        console.log('Unpublished cases:', unpublishedCases);
+        
+        // Show published cases first
+        if (publishedCases.length > 0) {
+            resultHTML += `
+                <div class="cases-section">
+                    <div class="section-header published">
+                        <span class="section-title">📗 Published Opinions (${publishedCases.length})</span>
+                        <small class="section-subtitle">Official precedential cases</small>
+                    </div>
+                    <div class="cases-container">
+                        ${publishedCases.map(caseData => renderCase(caseData)).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Show unpublished cases after with clear separation
+        if (unpublishedCases.length > 0) {
+            resultHTML += `
+                <div class="cases-section unpublished">
+                    <div class="section-header unpublished">
+                        <span class="section-title">📄 Unpublished Opinions (${unpublishedCases.length})</span>
+                        <small class="section-subtitle">Non-precedential cases</small>
+                    </div>
+                    <div class="cases-container">
+                        ${unpublishedCases.map(caseData => renderCase(caseData, true)).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Publication filter section completely removed
     }
     
     // Action buttons - only show the CourtListener button
@@ -310,12 +370,20 @@ function displayResults(data, originalQuery) {
     results.style.display = 'block';
 }
 
-function renderCase(caseData) {
+function renderCase(caseData, isUnpublished = false) {
     if (!caseData) return '<div class="no-case">No case data available</div>';
     
+    // Publication status badge
+    const publicationBadge = caseData.is_published === false ? 
+        '<span class="publication-badge unpublished">Unpublished</span>' : 
+        '<span class="publication-badge published">Published</span>';
+    
     return `
-        <div class="result-item highlighted">
-            <div class="case-name">${caseData.name || 'Unknown Case'}</div>
+        <div class="result-item highlighted ${isUnpublished ? 'unpublished-case' : ''}">
+            <div class="case-name">
+                ${caseData.name || 'Unknown Case'}
+                ${publicationBadge}
+            </div>
             <div class="case-details">
                 <div class="detail">
                     <div class="detail-label">Court</div>
@@ -357,6 +425,16 @@ function newSearch() {
     document.getElementById('results').style.display = 'none';
     currentResults = [];
 }
+
+// Temporarily disabled unpublished cases filtering
+/*
+function filterResults() {
+    // Re-render results with current filter state
+    if (currentResults.length > 0) {
+        displayResults(lastResultData, lastOriginalQuery);
+    }
+}
+*/
 
 function viewOnCourtListener(query) {
     const searchUrl = `https://www.courtlistener.com/?q=${encodeURIComponent(query)}`;
